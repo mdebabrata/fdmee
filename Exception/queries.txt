@@ -1,0 +1,73 @@
+Query to Generate Import Format Fields
+--------------------------------------
+SELECT impgroupkey,
+       impfldfieldname,
+       impfldfixedtext,
+       impfldstartpos,
+       impfldlength,
+       impfldsourcecolname,
+       impgroupfiletype,
+       impgroupdelimiter,
+       impseq,
+       LOG_SEQUENCE,
+       calc_seq
+  FROM (SELECT fl.impgroupkey,
+               fl.impfldfieldname,
+               fl.impfldfixedtext,
+               fl.impfldstartpos,
+               fl.impfldlength,
+               fl.impfldsourcecolname,
+               ig.impgroupfiletype,
+               ig.impgroupdelimiter,
+               fl.impseq,
+               0 LOG_SEQUENCE,
+               COALESCE(calc_seq, 0) CALC_SEQ
+          FROM tbhvimpgroup               ig,
+               tbhvimpitemfile            fl,
+               AIF_TARGET_APPL_DIMENSIONS td,
+               aif_processes              pr,
+               aif_bal_rule_loads         brl
+         WHERE pr.process_id = 27
+           and pr.process_id = brl.loadid
+           and pr.application_id = brl.application_id
+           and pr.partitionkey = pr.partitionkey
+           AND ig.impgroupkey = brl.impgroupkey
+           AND ig.impgroupkey = fl.impgroupkey
+           AND td.application_id = ig.imptargetapplicationid
+           AND fl.impfldfieldname = td.balance_column_name
+        UNION ALL
+        SELECT fl.impgroupkey,
+               fl.impfldfieldname,
+               fl.impfldfixedtext,
+               fl.impfldstartpos,
+               fl.impfldlength,
+               fl.impfldsourcecolname,
+               ig.impgroupfiletype,
+               ig.impgroupdelimiter,
+               fl.impseq,
+               0                      LOG_SEQUENCE,
+               -1                     CALC_SEQ
+          FROM tbhvimpgroup       ig,
+               tbhvimpitemfile    fl,
+               aif_processes      pr,
+               aif_bal_rule_loads brl
+         WHERE pr.process_id = 27
+           and pr.process_id = brl.loadid
+           and pr.application_id = brl.application_id
+           AND ig.impgroupkey = brl.impgroupkey
+           AND ig.impgroupkey = fl.impgroupkey
+           AND fl.impfldfieldname NOT IN
+               (SELECT td.balance_column_name
+                  FROM AIF_TARGET_APPL_DIMENSIONS td
+                 WHERE td.application_id = ig.imptargetapplicationid
+                   AND fl.impfldfieldname = td.balance_column_name)) qrslt
+ ORDER BY calc_seq, impseq
+------------------SQL Output-----------------------------
+   	IMPGROUPKEY	IMPFLDFIELDNAME	IMPFLDFIXEDTEXT	IMPFLDSTARTPOS	IMPFLDLENGTH	IMPFLDSOURCECOLNAME	IMPGROUPFILETYPE	IMPGROUPDELIMITER	IMPSEQ	LOG_SEQUENCE	CALC_SEQ
+1	IF_EPM_CUST	AMOUNT		1	1	Amount	EPM_EPM	,	18	0	-1
+2	IF_EPM_CUST	ACCOUNT		1	1	Account	EPM_EPM	,	19	0	0
+3	IF_EPM_CUST	ENTITY		1	1	Entity	EPM_EPM	,	20	0	0
+------------------Formatted Output in log-----------------
+ImpFieldName=AMOUNT:ImpFieldText=null:StartPos=1:SourceClName=Amount
+ImpFieldName=ACCOUNT:ImpFieldText=null:StartPos=1:SourceClName=Account
+ImpFieldName=ENTITY:ImpFieldText=null:StartPos=1:SourceClName=Entity

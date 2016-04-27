@@ -1,0 +1,7 @@
+"Year","Scenario","Version","Entity","Product","Account","Period"
+"Feb"
+"FY14","Plan","Working","000","P_000","DSO",45
+"FY14","Plan","Working","000","P_000","BadDebtPct",0.005
+"FY14","Plan","Working","000","P_000","DaysInv",35
+"FY14","Plan","Working","000","P_000","PrepaidPct",0.15
+"FY14","Plan","Working","000","P_000","DPO",60
